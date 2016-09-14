@@ -8,7 +8,7 @@ I=original_image;
 [height,width] = size(I);
 % store images and the total number of them
 n_images=6;
-figure('name', 'Images Subsampled by Factors of Two');
+figure('name', 'Subsampled by Factors of Two');
 
 % display original image
 subplot(3,2,1)
@@ -48,11 +48,14 @@ subimage(ds_5)
 i=1;
 gray_levels=[256, 16, 4, 2];
 quantized_images=[];
-I=original_image;
+quantized_maps=[];
+I=mat2gray(original_image);
+figure('name', 'Gray Levels Reduced by Powers of Two')
 % Quantize gray levels in original image from 256 to 2 in powers of 2
 while i < 5
-   quantized_image=uint8(mat2gray(I) * (gray_levels(i)));
-   quantized_images=[quantized_images, quantized_image];
+   [quantized_image,map32]=gray2ind(I, gray_levels(i));
+   subplot(3,2,i)
+   subimage(quantized_image,map32)
    i=i+1; 
 end
 
@@ -63,13 +66,16 @@ py_2=impyramid(ds_2, 'reduce');
 py_3=impyramid(ds_3, 'reduce');
 py_4=impyramid(ds_4, 'reduce');
 py_5=impyramid(ds_5, 'reduce');
-figure, imshow(py)
-figure, imshow(py_1)
-figure, imshow(py_2)
-figure, imshow(py_3)
-figure, imshow(py_4)
-figure, imshow(py_5)
-
+i_cells = {py, py_1, py_2, py_3, py_4, py_5};
+% plot with imshowTruesize - true aspect ration is preserved
+dim=6;
+margins = [0 10];
+Handles = imshowTruesize(i_cells,margins,'left');
+for iRow = 1:1
+   for iCol = 1:dim
+      axis(Handles.hSubplot(iRow,iCol),'on')
+   end
+end
 
 % construct 3x3 avging filter
 avg_filter=fspecial('average',[3 3]);
@@ -123,9 +129,13 @@ py_2=impyramid(ds_2, 'reduce');
 py_3=impyramid(ds_3, 'reduce');
 py_4=impyramid(ds_4, 'reduce');
 py_5=impyramid(ds_5, 'reduce');
-figure, imshow(py)
-figure, imshow(py_1)
-figure, imshow(py_2)
-figure, imshow(py_3)
-figure, imshow(py_4)
-figure, imshow(py_5)
+i_cells = {py, py_1, py_2, py_3, py_4, py_5};
+% plot with imshowTruesize - true aspect ration is preserved
+dim=6;
+margins = [0 10];
+Handles = imshowTruesize(i_cells,margins,'left');
+for iRow = 1:1
+   for iCol = 1:dim
+      axis(Handles.hSubplot(iRow,iCol),'on')
+   end
+end
