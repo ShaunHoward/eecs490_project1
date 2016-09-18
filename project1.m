@@ -1,75 +1,62 @@
 % Shaun Howard
 % EECS 490 Project 1: Image Quantization and Sampling
 
-% read a (nearly) 1024x1024 grayscale image
+% read a 1024x1024 grayscale image
 original_image=imread('proj1fig', 'jpg');
-I=original_image;
+I=mat2gray(original_image);
 % get image dimensions
 [height,width] = size(I);
 % store images and the total number of them
 n_images=6;
-figure('name', 'Images Subsampled by Factors of Two');
-
+figure('name', 'Subsampled by Factors of Two');
 % display original image
-subplot(3,2,1)
-subimage(I)
-
-% subsample the image by factors of two until it reaches nearly 32 px wide
-% 512x512 plot
-J=downsample(I,2);
-ds_1=downsample(J',2)';
-subplot(3,2,2)
-subimage(ds_1)
-
-% 256x256 plot
-J=downsample(ds_1,2);
-ds_2=downsample(J',2)';
-subplot(3,2,3)
-subimage(ds_2)
-
-% 128x128 plot
-J=downsample(ds_2,2);
-ds_3=downsample(J',2)';
-subplot(3,2,4)
-subimage(ds_3)
-
-% 64x64 plot
-J=downsample(ds_3,2);
-ds_4=downsample(J',2)';
-subplot(3,2,5)
-subimage(ds_4)
-
-% 32x32 plot
-J=downsample(ds_4,2);
-ds_5=downsample(J',2)';
-subplot(3,2,6)
-subimage(ds_5)
+margins=[0 0];
+subplot_tight(3,2,1, margins);
+imshow(I)
+image_arr={I};
+i=2;
+while i <= n_images
+    % downsample image rows, columns
+    J=downsample(I,2);
+    ds=downsample(J',2)';
+    image_arr=[image_arr {ds}];
+    % display downsampled image
+    subplot_tight(3,2,i, margins);
+    imshow(ds);
+    I=ds;
+    i=i+1;
+end
 
 i=1;
 gray_levels=[256, 16, 4, 2];
 quantized_images=[];
-I=original_image;
+quantized_maps=[];
+I=mat2gray(original_image);
+figure('name', 'Gray Levels Reduced by Powers of Two')
 % Quantize gray levels in original image from 256 to 2 in powers of 2
 while i < 5
-   quantized_image=uint8(mat2gray(I) * (gray_levels(i)));
-   quantized_images=[quantized_images, quantized_image];
+   [quantized_image,map32]=gray2ind(I, gray_levels(i));
+   % display quantized images
+   subplot_tight(3,2,i, margins)
+   subimage(quantized_image,map32)
    i=i+1; 
 end
 
 % construct an image pyramid from the downsampled images
-py=impyramid(I, 'reduce');
-py_1=impyramid(ds_1, 'reduce');
-py_2=impyramid(ds_2, 'reduce');
-py_3=impyramid(ds_3, 'reduce');
-py_4=impyramid(ds_4, 'reduce');
-py_5=impyramid(ds_5, 'reduce');
-figure, imshow(py)
-figure, imshow(py_1)
-figure, imshow(py_2)
-figure, imshow(py_3)
-figure, imshow(py_4)
-figure, imshow(py_5)
+i = 1;
+pyramid_cells={};
+while i <= n_images
+    py=impyramid(image_arr{i}, 'reduce');
+    pyramid_cells=[pyramid_cells {py}];
+    i=i+1;
+end
 
+% plot pyramid with imshowTruesize - true aspect ratio is preserved
+margins = [0 0];
+Handles = imshowTruesize(pyramid_cells,margins,'top');
+for iCol = 1:n_images
+  axis(Handles.hSubplot(1,iCol),'off')
+end
 
 % construct 3x3 avging filter
 avg_filter=fspecial('average',[3 3]);
@@ -77,55 +64,37 @@ avg_filter=fspecial('average',[3 3]);
 figure('name', 'Images Filtered and Subsampled by Factors of Two');
 
 % display original image
-subplot(3,2,1)
-subimage(I)
+subplot_tight(3,2,1, margins)
+imshow(original_image)
+I = original_image;
+image_arr={I};
+i=2;
+while i <= n_images
+    % average filter image
+    I=imfilter(I,avg_filter);
+    % downsample image rows and columns
+    J=downsample(I,2);
+    ds=downsample(J',2)';
+    image_arr=[image_arr ds];
+    % display downsampled image
+    subplot_tight(3,2,i, margins)
+    imshow(ds)
+    I=ds;
+    i=i+1;
+end
 
-% subsample the image by factors of two until it reaches nearly 32 px wide
-% 512x512 plot
-I1=imfilter(I,avg_filter);
-J=downsample(I1,2);
-ds_1=downsample(J',2)';
-subplot(3,2,2)
-subimage(ds_1)
+% construct an image pyramid from the filtered and downsampled images
+i = 1;
+pyramid_cells={};
+while i <= n_images
+    py=impyramid(image_arr{i}, 'reduce');
+    pyramid_cells=[pyramid_cells {py}];
+    i=i+1;
+end
 
-% 256x256 plot
-ds_1=imfilter(ds_1,avg_filter);
-J=downsample(ds_1,2);
-ds_2=downsample(J',2)';
-subplot(3,2,3)
-subimage(ds_2)
-
-% 128x128 plot
-ds_2=imfilter(ds_2,avg_filter);
-J=downsample(ds_2,2);
-ds_3=downsample(J',2)';
-subplot(3,2,4)
-subimage(ds_3)
-
-% 64x64 plot
-ds_3=imfilter(ds_3,avg_filter);
-J=downsample(ds_3,2);
-ds_4=downsample(J',2)';
-subplot(3,2,5)
-subimage(ds_4)
-
-% 32x32 plot
-ds_4=imfilter(ds_4,avg_filter);
-J=downsample(ds_4,2);
-ds_5=downsample(J',2)';
-subplot(3,2,6)
-subimage(ds_5)
-
-% construct an image pyramid from the downsampled images
-py=impyramid(I, 'reduce');
-py_1=impyramid(ds_1, 'reduce');
-py_2=impyramid(ds_2, 'reduce');
-py_3=impyramid(ds_3, 'reduce');
-py_4=impyramid(ds_4, 'reduce');
-py_5=impyramid(ds_5, 'reduce');
-figure, imshow(py)
-figure, imshow(py_1)
-figure, imshow(py_2)
-figure, imshow(py_3)
-figure, imshow(py_4)
-figure, imshow(py_5)
+% plot with imshowTruesize - true aspect ratio is preserved
+margins = [0 0];
+Handles = imshowTruesize(pyramid_cells,margins,'top');
+for iCol = 1:n_images
+  axis(Handles.hSubplot(1,iCol),'off')
+end
